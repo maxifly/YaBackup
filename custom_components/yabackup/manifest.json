@@ -1,0 +1,12 @@
+{
+  "domain": "yabackup",
+  "name": "YandexDiskBackup",
+  "config_flow": true,
+  "documentation": "",
+  "issue_tracker": "",
+  "codeowners": ["kuku"],
+  "dependencies": [],
+  "requirements": ["yadisk=1.2.17"],
+  "version": "1.0.0",
+  "iot_class": "local_polling"
+}
