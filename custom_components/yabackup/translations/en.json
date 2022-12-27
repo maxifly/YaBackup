@@ -1,0 +1,20 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "path1": "Path"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "path1": "Path"
+        }
+      }
+    }
+  }
+}

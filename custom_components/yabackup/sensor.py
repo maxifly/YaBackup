@@ -1,36 +1,38 @@
 """Platform for sensor integration."""
-import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import TEMP_CELSIUS
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
+from .yad import YaDsk
+from .constants import DOMAIN
+
 
 # from __future__ import annotations
 
 
-def setup_platform(
-        hass: HomeAssistant,
-        config: ConfigType,
-        add_entities: AddEntitiesCallback,
-        discovery_info: DiscoveryInfoType | None = None
-) -> None:
-    """Set up the sensor platform."""
-    add_entities([ExampleSensor(config, None)], True)
+# def setup_platform(
+#         hass: HomeAssistant,
+#         config: ConfigType,
+#         add_entities: AddEntitiesCallback,
+#         discovery_info: DiscoveryInfoType | None = None
+# ) -> None:
+#     """Set up the sensor platform."""
+#     add_entities([ExampleSensor(config, None)], True)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                             async_add_entities):
-    entity = ExampleSensor(entry.options, entry.entry_id)
+    ya_disk = hass.data[DOMAIN][entry.entry_id]
+
+    entity = ExampleSensor(ya_disk)
     async_add_entities([entity], True)
 
-    hass.data[DOMAIN][entry.entry_id] = entity
+    # hass.data[DOMAIN][entry.entry_id] = entity
 
 
 class ExampleSensor(SensorEntity):
@@ -41,11 +43,13 @@ class ExampleSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.VOLUME
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, config: dict, unique_id=None):
-        i = 1
+    _ya_dsk = None
+
+    def __init__(self, ya_dsk: YaDsk):
+        self._ya_dsk = ya_dsk
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value = 23
+        self._attr_native_value  = self._ya_dsk.count_files()

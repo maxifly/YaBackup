@@ -6,7 +6,7 @@
   "issue_tracker": "",
   "codeowners": ["kuku"],
   "dependencies": [],
-  "requirements": ["yadisk=1.2.17"],
+  "requirements": [],
   "version": "1.0.0",
   "iot_class": "local_polling"
 }
