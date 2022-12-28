@@ -8,8 +8,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .yad import YaDsk
 from .constants import DOMAIN
+from .yad import YaDsk
 
 
 # from __future__ import annotations
@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
 class ExampleSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    _attr_name = "Example Temperature"
+    _attr_name = DOMAIN + "_file_count"
     # _attr_native_unit_of_measurement = TEMP_CELSIUS
     _attr_device_class = SensorDeviceClass.VOLUME
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -52,4 +52,4 @@ class ExampleSensor(SensorEntity):
         """Fetch new state data for the sensor.
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._attr_native_value  = self._ya_dsk.count_files()
+        self._attr_native_value = self._ya_dsk.file_amount

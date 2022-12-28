@@ -11,7 +11,7 @@ from .yad import YaDsk
 #
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[str] = ["sensor"]
+PLATFORMS: list[str] = ["sensor", "button"]
 
 
 async def async_setup(hass, hass_config):
@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # add options handler
     entry.add_update_listener(async_update_options)
 
-    ya_dsk = YaDsk(entry.options, entry.entry_id)
+    ya_dsk = YaDsk(hass, entry.options, entry.entry_id)
 
     _LOGGER.info("Create YaDisk " + ya_dsk.get_info())
 
