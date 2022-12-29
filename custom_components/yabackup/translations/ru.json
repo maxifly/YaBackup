@@ -3,8 +3,16 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Путь"
+          "path1": "Путь",
+          "client_id": "client_id",
+          "client_secret1": "client_secret",
+          "add_token": "Добавить токен"
         }
+      },
+      "token": {
+        "data": {
+          "check_code": "Проверочный код",
+          "text": "Откройте веб-страницу и получите проверочный код" }
       }
     }
   },
@@ -12,7 +20,8 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Путь"
+          "path1": "Путь",
+          "add_token": "Изменить токен"
         }
       }
     }

@@ -3,8 +3,14 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Path"
+          "path1": "Path",
+          "add_token": "Add token"
         }
+      },
+      "token": {
+        "data": {
+          "check_code": "CheckCode",
+          "text": "Open Web Url" }
       }
     }
   },
@@ -12,7 +18,8 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Path"
+          "path1": "Path",
+          "add_token": "Change token"
         }
       }
     }

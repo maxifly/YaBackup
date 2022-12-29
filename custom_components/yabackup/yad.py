@@ -1,11 +1,49 @@
+import base64
 import logging
 
+import requests
 import yadisk as yadisk
 from homeassistant.core import HomeAssistant
 
-from .constants import CONF_PATH
+from .constants import CONF_PATH, HEAD_CONTENT_TYPE, CONTENT_TYPE_FORM, HEAD_AUTHORIZATION, URL_GET_TOKEN, CONF_TOKEN, \
+    YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_get_token(hass: HomeAssistant, client_id, client_secret, check_code) -> dict:
+    response = await  hass.async_add_executor_job(_get_token, client_id, client_secret, check_code)
+    return response
+
+
+def _get_token(client_id, client_secret, check_code) -> dict:
+    headers = {}
+    headers[HEAD_CONTENT_TYPE] = CONTENT_TYPE_FORM
+    headers[HEAD_AUTHORIZATION] = 'Basic ' + str(
+        get_auth_string(client_id, client_secret))
+
+    try:
+        response = requests.post(URL_GET_TOKEN, headers=headers,
+                                 data='grant_type=authorization_code&code=' + check_code,
+                                 timeout=60)
+        if response.status_code != 200:
+            _LOGGER.error(f"Status code{response.status_code}")
+            _LOGGER.error(f"Request token result {response.content}")
+            raise ValueError
+
+        json_response = response.json()
+
+        result = {CONF_TOKEN: json_response[YANDEX_FIELD_ACCESS_TOKEN],
+                  CONF_REFRESH_TOKEN: json_response[YANDEX_FIELD_REFRESH_TOKEN]}
+
+        return result
+    except Exception as e:
+        _LOGGER.error("Error when get token", exc_info=True)
+        raise e
+
+
+def get_auth_string(client_id, client_secret):
+    return base64.b64encode(bytes(client_id + ':' + client_secret, 'utf-8')).decode('utf-8')
 
 
 class YaDsk:
@@ -44,5 +82,4 @@ class YaDsk:
             self._file_amount = len(ll)
             _LOGGER.debug(f"-0- Count files result: {self.file_amount}")
         except Exception as e:
-            _LOGGER.error(f"Error get directory info. Path: {self._path}", exc_info = True)
-
+            _LOGGER.error(f"Error get directory info. Path: {self._path}", exc_info=True)
