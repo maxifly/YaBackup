@@ -17,3 +17,6 @@ URL_GET_TOKEN = 'https://oauth.yandex.ru/token'
 
 YANDEX_FIELD_ACCESS_TOKEN = 'access_token'
 YANDEX_FIELD_REFRESH_TOKEN = 'refresh_token'
+
+REST_TIMEOUT_SEC = 60
+HTTP_OK = 200
