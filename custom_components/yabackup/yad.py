@@ -6,7 +6,7 @@ import yadisk as yadisk
 from homeassistant.core import HomeAssistant
 
 from .constants import CONF_PATH, HEAD_CONTENT_TYPE, CONTENT_TYPE_FORM, HEAD_AUTHORIZATION, URL_GET_TOKEN, CONF_TOKEN, \
-    YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN
+    YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN, REST_TIMEOUT_SEC, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,15 +20,15 @@ def _get_token(client_id, client_secret, check_code) -> dict:
     headers = {}
     headers[HEAD_CONTENT_TYPE] = CONTENT_TYPE_FORM
     headers[HEAD_AUTHORIZATION] = 'Basic ' + str(
-        get_auth_string(client_id, client_secret))
+        _get_auth_string(client_id, client_secret))
 
     try:
         response = requests.post(URL_GET_TOKEN, headers=headers,
                                  data='grant_type=authorization_code&code=' + check_code,
-                                 timeout=60)
-        if response.status_code != 200:
-            _LOGGER.error(f"Status code{response.status_code}")
-            _LOGGER.error(f"Request token result {response.content}")
+                                 timeout=REST_TIMEOUT_SEC)
+        if response.status_code != HTTP_OK:
+            _LOGGER.error("Status code %s", response.status_code)
+            _LOGGER.error("Request token result %s", response.status_code)
             raise ValueError
 
         json_response = response.json()
@@ -42,7 +42,7 @@ def _get_token(client_id, client_secret, check_code) -> dict:
         raise e
 
 
-def get_auth_string(client_id, client_secret):
+def _get_auth_string(client_id, client_secret):
     return base64.b64encode(bytes(client_id + ':' + client_secret, 'utf-8')).decode('utf-8')
 
 
@@ -66,20 +66,20 @@ class YaDsk:
     def update_config(self, config: dict):
         self._path = config[CONF_PATH]
 
-        _LOGGER.info(f"Config updated to {self.get_info()}")
+        _LOGGER.info("Config updated to %s", self.get_info())
 
     # async def async_count_files(self):
     #     await self.count_files()
 
     async def count_files(self):
         await self._hass.async_add_executor_job(self._count_files)
-        _LOGGER.debug(f"Count files result: {self.file_amount}")
+        _LOGGER.debug("Count files result: %s", self.file_amount)
 
     def _count_files(self):
         try:
             y = yadisk.YaDisk(token=self._token)
             ll = list(y.listdir(self._path))
             self._file_amount = len(ll)
-            _LOGGER.debug(f"-0- Count files result: {self.file_amount}")
+            _LOGGER.debug("-0- Count files result: %s", self.file_amount)
         except Exception as e:
-            _LOGGER.error(f"Error get directory info. Path: {self._path}", exc_info=True)
+            _LOGGER.error("Error get directory info. Path: %s", self._path, exc_info=True)

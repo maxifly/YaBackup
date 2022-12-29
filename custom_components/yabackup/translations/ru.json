@@ -3,10 +3,13 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Путь",
+          "path1": "Каталог на ЯндексДиске"
+        }
+      },
+      "client": {
+        "data": {
           "client_id": "client_id",
-          "client_secret1": "client_secret",
-          "add_token": "Добавить токен"
+          "client_secret1": "client_secret"
         }
       },
       "token": {
@@ -20,9 +23,20 @@
     "step": {
       "user": {
         "data": {
-          "path1": "Путь",
-          "add_token": "Изменить токен"
+          "path1": "Каталог на ЯндексДиске",
+          "add_token": "Изменить данные о подключении"
         }
+      },
+      "client": {
+        "data": {
+          "client_id": "client_id",
+          "client_secret1": "client_secret"
+        }
+      },
+      "token": {
+        "data": {
+          "check_code": "Проверочный код",
+          "text": "Откройте веб-страницу и получите проверочный код" }
       }
     }
   }
