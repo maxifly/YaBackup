@@ -1,14 +1,18 @@
 import base64
 import logging
+from typing import Generator
 
 import requests
 import yadisk as yadisk
 from homeassistant.core import HomeAssistant
+from yadisk.objects import ResourceObject
 
 from .constants import CONF_PATH, HEAD_CONTENT_TYPE, CONTENT_TYPE_FORM, HEAD_AUTHORIZATION, URL_GET_TOKEN, CONF_TOKEN, \
     YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN, REST_TIMEOUT_SEC, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
+
+TYPE_FILE = 'file'
 
 
 async def async_get_token(hass: HomeAssistant, client_id, client_secret, check_code) -> dict:
@@ -50,13 +54,19 @@ class YaDsk:
     _token = None
     _path = None
     _file_amount = 0
+    _file_markdown_list = ""
+    _file_list = []
 
     @property
     def file_amount(self):
         return self._file_amount
 
+    @property
+    def file_markdown_list(self):
+        return self._file_markdown_list
+
     def __init__(self, hass: HomeAssistant, config: dict, unique_id=None):
-        self._token = 'y0_AgAAAABKKZKkAAjy3gAAAADX4p7jeWCmi6ScS7Sg4LRY864tReTAkiM'
+        self._token = config[CONF_TOKEN]
         self._path = config[CONF_PATH]
         self._hass = hass
 
@@ -68,9 +78,6 @@ class YaDsk:
 
         _LOGGER.info("Config updated to %s", self.get_info())
 
-    # async def async_count_files(self):
-    #     await self.count_files()
-
     async def count_files(self):
         await self._hass.async_add_executor_job(self._count_files)
         _LOGGER.debug("Count files result: %s", self.file_amount)
@@ -78,8 +85,29 @@ class YaDsk:
     def _count_files(self):
         try:
             y = yadisk.YaDisk(token=self._token)
-            ll = list(y.listdir(self._path))
-            self._file_amount = len(ll)
-            _LOGGER.debug("-0- Count files result: %s", self.file_amount)
+            files = self._file_list_processing(y.listdir(self._path))
+            self._file_amount = len(files)
+            self._file_markdown_list = self._get_markdown_files(files, 10)
+            _LOGGER.debug("Count files result: %s", self.file_amount)
         except Exception as e:
             _LOGGER.error("Error get directory info. Path: %s", self._path, exc_info=True)
+
+    @staticmethod
+    def _file_list_processing(objects: Generator[any, any, ResourceObject]) -> list:
+        files = [obj for obj in objects if obj.type == TYPE_FILE]
+        result = sorted(files, key=lambda obj: obj.modified, reverse=True)
+        return result
+
+    @staticmethod
+    def _get_markdown_files(files: list[ResourceObject], max_items: int):
+        if len(files) == 0:
+            return ""
+
+        result = "|name|modification|"
+        file_count = 0
+        for file in files:
+            result += "\n|{0:s}|{1}|".format(file.name, file.modified)
+            file_count += 1
+            if file_count >= max_items:
+                break
+        return result
