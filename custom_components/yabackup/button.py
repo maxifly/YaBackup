@@ -14,8 +14,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                             async_add_entities):
     ya_disk = hass.data[DOMAIN][entry.entry_id]
 
-    entity = UpdateButton(ya_disk)
-    async_add_entities([entity], True)
+    entity1 = UpdateButton(ya_disk)
+    entity2 = UploadButton(ya_disk)
+    async_add_entities([entity1, entity2], True)
 
 
 class UpdateButton(ButtonEntity):
@@ -33,3 +34,20 @@ class UpdateButton(ButtonEntity):
         """Handle the button press."""
         await self._ya_dsk.count_files()
         _LOGGER.debug("Button press processed")
+
+
+class UploadButton(ButtonEntity):
+    """Representation of a Button."""
+
+    _attr_name = DOMAIN + "_upload_button"
+
+    _ya_dsk: YaDsk = None
+
+    def __init__(self, ya_dsk: YaDsk):
+        _LOGGER.debug("Create update button")
+        self._ya_dsk = ya_dsk
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self._ya_dsk.upload_files()
+        _LOGGER.debug("Upload button press processed")

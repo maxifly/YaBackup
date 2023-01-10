@@ -1,11 +1,14 @@
 import base64
+import glob
 import logging
 from typing import Generator
 
 import requests
 import yadisk as yadisk
+from homeassistant.components.backup import BackupManager
 from homeassistant.core import HomeAssistant
 from yadisk.objects import ResourceObject
+from homeassistant.components.backup.const import DOMAIN as BACKUP_DOMAIN
 
 from .constants import CONF_PATH, HEAD_CONTENT_TYPE, CONTENT_TYPE_FORM, HEAD_AUTHORIZATION, URL_GET_TOKEN, CONF_TOKEN, \
     YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN, REST_TIMEOUT_SEC, HTTP_OK
@@ -92,6 +95,37 @@ class YaDsk:
         except Exception as e:
             _LOGGER.error("Error get directory info. Path: %s", self._path, exc_info=True)
 
+    async def upload_files(self):
+        local_backups = await self.get_local_files_list()
+        remote_backups = await self.count_files()
+
+        # TODO Compare lists and upload new files
+        
+
+
+    async def get_local_files_list(self):
+        """Return the list of files, applying filter."""
+        # query = folder_path + filter_term
+
+        manager: BackupManager = self._hass.data[BACKUP_DOMAIN]
+        backups = await manager.get_backups()
+
+        result = {}
+        for backup in backups.values():
+            result[backup.name+'.tar'] = backup.path
+
+
+        # dir = self._get_local_backup_dir()
+        # bb = self._get_backups()
+        #
+        # files_list = glob.glob("/home/maxim/.homeassistant/backups/*")
+        # _LOGGER.debug(files_list)
+        return result
+
+    def _get_local_backup_dir(self):
+        return self._hass.data[BACKUP_DOMAIN].backup_dir
+
+
     @staticmethod
     def _file_list_processing(objects: Generator[any, any, ResourceObject]) -> list:
         files = [obj for obj in objects if obj.type == TYPE_FILE]
@@ -103,7 +137,7 @@ class YaDsk:
         if len(files) == 0:
             return ""
 
-        result = "|name|modification|"
+        result = "|name|modification|\n|---|---|"
         file_count = 0
         for file in files:
             result += "\n|{0:s}|{1}|".format(file.name, file.modified)
