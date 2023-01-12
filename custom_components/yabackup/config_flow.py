@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigFlow, OptionsFlow, ConfigEntry
 from homeassistant.core import callback
 
 from .constants import DOMAIN, CONF_PATH, CONF_CHECK_CODE, CONF_CLIENT_ID, CONF_CLIENT_SECRET, URL_GET_CODE, \
-    CONF_ADD_TOKEN
+    CONF_ADD_TOKEN, CONF_MAX_REMOTE_FILE, DEFAULT_MAX_REMOTE_FILE
 from .yad import async_get_token
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +38,8 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='user',
             data_schema=vol.Schema({
-                vol.Required(CONF_PATH): cv.string
+                vol.Required(CONF_PATH): cv.string,
+                vol.Required(CONF_MAX_REMOTE_FILE, default=DEFAULT_MAX_REMOTE_FILE): cv.positive_int
             })
         )
 
@@ -92,11 +93,13 @@ class OptionsFlowHandler(OptionsFlow):
     async def async_step_init(self, user_input=None):
         self._data.update(self.config_entry.options)
         path = self._data[CONF_PATH]
+        max_remote_file = self._data.setdefault(CONF_MAX_REMOTE_FILE, DEFAULT_MAX_REMOTE_FILE)
 
         return self.async_show_form(
             step_id='user',
             data_schema=vol.Schema({
                 vol.Required(CONF_PATH, default=path): cv.string,
+                vol.Required(CONF_MAX_REMOTE_FILE, default=max_remote_file): cv.positive_int,
                 vol.Required(CONF_ADD_TOKEN, default=False): cv.boolean
             })
         )

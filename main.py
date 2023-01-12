@@ -1,4 +1,5 @@
 import base64
+import datetime
 
 import yadisk
 import requests
@@ -11,16 +12,16 @@ import requests
 TOKEN = 'y0_AgAAAABKKZKkAAjy3gAAAADX4p7jeWCmi6ScS7Sg4LRY864tReTAkiM'
 
 
-def get_disk_info(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def upload_file():
+    print('Start')  # Press Ctrl+F8 to toggle the breakpoint.
 
     y = yadisk.YaDisk(token=TOKEN)
     print(y.get_disk_info())
-
-    # Выводит содержимое "/some/path"
-
-    ll = list(y.listdir("/IT"))
+    print(datetime.datetime.now())
+    y.upload('/home/maxim/.homeassistant/backups/cb7d9207.tar', '/ha_test/Core 2023.1.0.dev17.tar', overwrite=True,
+             n_retries=3, retry_interval=5.0, timeout=(15.0, 250.0))
+    print(datetime.datetime.now())
+    ll = list(y.listdir("/ha_test"))
     print(ll)
 
 HEAD_CONTENT_TYPE = 'Content_Type'
@@ -43,6 +44,6 @@ def get_auth_string(client_id, client_secret):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('2221705')
+    upload_file()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

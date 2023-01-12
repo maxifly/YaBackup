@@ -7,6 +7,11 @@ CONF_ADD_TOKEN = 'add_token'
 CONF_CHECK_CODE = 'check_code'
 CONF_TOKEN = 'token'
 CONF_REFRESH_TOKEN = 'refresh_token'
+CONF_MAX_REMOTE_FILE = 'max_remote_file'
+
+
+DEFAULT_MAX_REMOTE_FILE = 10
+
 
 HEAD_CONTENT_TYPE = 'Content_Type'
 HEAD_AUTHORIZATION = 'Authorization'
