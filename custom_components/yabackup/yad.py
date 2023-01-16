@@ -1,4 +1,5 @@
 import base64
+import datetime
 import logging
 from typing import Generator
 
@@ -8,11 +9,11 @@ from homeassistant.components.backup import BackupManager
 from homeassistant.components.backup.const import DOMAIN as BACKUP_DOMAIN
 from homeassistant.core import HomeAssistant
 from yadisk.objects import ResourceObject
-
+from yadisk.objects import TokenObject
 
 from .constants import CONF_PATH, HEAD_CONTENT_TYPE, CONTENT_TYPE_FORM, HEAD_AUTHORIZATION, URL_GET_TOKEN, CONF_TOKEN, \
     YANDEX_FIELD_ACCESS_TOKEN, YANDEX_FIELD_REFRESH_TOKEN, CONF_REFRESH_TOKEN, REST_TIMEOUT_SEC, HTTP_OK, \
-    CONF_MAX_REMOTE_FILE
+    CONF_MAX_REMOTE_FILE, CONF_CLIENT_ID, CONF_CLIENT_SECRET
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +51,19 @@ def _get_token(client_id, client_secret, check_code) -> dict:
         raise e
 
 
+def _refresh_token_request(refresh_token, client_id, client_secret):
+    try:
+        _LOGGER.debug("Try refresh token")
+        token_object: TokenObject = yadisk.functions.refresh_token(refresh_token, client_id, client_secret)
+
+        return {CONF_TOKEN: token_object['access_token'],
+                CONF_REFRESH_TOKEN: token_object['refresh_token']}
+
+    except Exception as e:
+        _LOGGER.error("Error when refresh token", exc_info=True)
+        raise e
+
+
 def _get_auth_string(client_id, client_secret):
     return base64.b64encode(bytes(client_id + ':' + client_secret, 'utf-8')).decode('utf-8')
 
@@ -62,6 +76,7 @@ class YaDsk:
     _file_amount = 0
     _file_markdown_list = ""
     _file_list = []
+    _update_listeners = []
 
     @property
     def file_amount(self):
@@ -73,8 +88,11 @@ class YaDsk:
 
     def __init__(self, hass: HomeAssistant, config: dict, unique_id=None):
         self._token = config[CONF_TOKEN]
+        self._refresh_token_value = config[CONF_REFRESH_TOKEN]
         self._path = config[CONF_PATH]
         self._max_remote_file_amount = config[CONF_MAX_REMOTE_FILE]
+        self._client_id = config[CONF_CLIENT_ID]
+        self._client_s = config[CONF_CLIENT_SECRET]
         self._hass = hass
 
     def get_info(self):
@@ -83,8 +101,16 @@ class YaDsk:
     def update_config(self, config: dict):
         self._path = config[CONF_PATH]
         self._max_remote_file_amount = config[CONF_MAX_REMOTE_FILE]
+        self._token = config[CONF_TOKEN]
+        self._refresh_token_value = config[CONF_REFRESH_TOKEN]
+        self._client_id = config[CONF_CLIENT_ID]
+        self._client_s = config[CONF_CLIENT_SECRET]
 
         _LOGGER.info("Config updated to %s", self.get_info())
+
+    def add_update_listener(self, coro):
+        """Listeners to handle automatic data update."""
+        self._update_listeners.append(coro)
 
     async def count_files(self):
         await self._hass.async_add_executor_job(self._count_files)
@@ -102,6 +128,8 @@ class YaDsk:
             _LOGGER.error("Error get directory info. Path: %s", self._path, exc_info=True)
 
     async def upload_files(self):
+        await self._refresh_token()
+
         local_backups = await self.get_local_files_list()
         await self.count_files()
 
@@ -167,6 +195,22 @@ class YaDsk:
 
     def _get_local_backup_dir(self):
         return self._hass.data[BACKUP_DOMAIN].backup_dir
+
+    async def _refresh_token(self):
+        result = await self._hass.async_add_executor_job(_refresh_token_request, self._refresh_token_value,
+                                                         self._client_id, self._client_s)
+
+        self._refresh_token_value = result[CONF_REFRESH_TOKEN]
+        self._token = result[CONF_TOKEN]
+
+        await self._handle_update()
+
+
+    async def _handle_update(self):
+        for coro in self._update_listeners:
+            await coro(
+                refresh_token=self._refresh_token_value, token=self._token, mmm = datetime.datetime.now()
+            )
 
     @staticmethod
     def _file_list_processing(objects: Generator[any, any, ResourceObject]) -> list:
