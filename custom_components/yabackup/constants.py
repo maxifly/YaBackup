@@ -7,6 +7,7 @@ CONF_ADD_TOKEN = 'add_token'
 CONF_CHECK_CODE = 'check_code'
 CONF_TOKEN = 'token'
 CONF_REFRESH_TOKEN = 'refresh_token'
+CONF_TOKEN_EXPIRES = 'token_expires'
 CONF_MAX_REMOTE_FILE = 'max_remote_file'
 
 
