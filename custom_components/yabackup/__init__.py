@@ -22,9 +22,8 @@ async def async_setup(hass, hass_config):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-
-    async def update_yad_data(**kwargs):
-        hass.config_entries.async_update_entry(entry, data=kwargs)
+    async def update_yad_option(option: dict):
+        hass.config_entries.async_update_entry(entry, data = {}, options=option)
 
     _LOGGER.info("async_setup_entry")
 
@@ -39,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     ya_dsk = YaDsk(hass, entry.options, entry.entry_id)
     _LOGGER.info("Create YaDisk " + ya_dsk.get_info())
 
-    ya_dsk.add_update_listener(update_yad_data)
+    ya_dsk.add_update_listener(update_yad_option)
 
     hass.data[DOMAIN][entry.entry_id] = ya_dsk
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
@@ -49,4 +48,3 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_update_options(hass: HomeAssistant, entry: ConfigEntry):
     # update entity config
     hass.data[DOMAIN][entry.entry_id].update_config(entry.options)
-
