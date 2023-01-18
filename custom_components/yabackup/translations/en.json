@@ -11,12 +11,14 @@
         "data": {
           "client_id": "client_id",
           "client_secret1": "client_secret"
-        }
+        },
+        "description": "Get [application parameter](https://oauth.yandex.ru/) which used for communicate with YandexDisk"
       },
       "token": {
         "data": {
-          "check_code": "Check code",
-          "text": "Open web-page and get check code" }
+          "check_code": "Check code"
+        },
+        "description": "Open [web-page]({check_code_url}) and get check code"
       }
     }
   },
@@ -33,12 +35,14 @@
         "data": {
           "client_id": "client_id",
           "client_secret1": "client_secret"
-        }
+        },
+        "description": "Get [application parameter](https://oauth.yandex.ru/) which used for communicate with YandexDisk"
       },
       "token": {
         "data": {
-          "check_code": "Check code",
-          "text": "Open web-page and get check code" }
+          "check_code": "Check code"
+        },
+        "description": "Open [web-page]({check_code_url}) and get check code"
       }
     }
   }
