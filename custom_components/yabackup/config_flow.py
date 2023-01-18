@@ -15,6 +15,7 @@ DATA_SCHEMA = vol.Schema({(CONF_PATH): str})
 
 SECURITY_KEYS = [CONF_ADD_TOKEN, CONF_CHECK_CODE]
 INTEGRATION_TITLE = 'Backup to YandexDisk'
+PLACEHOLDER_CHECK_CODE_URL = 'check_code_url'
 
 
 def option_without_secret_data(options: dict) -> dict:
@@ -73,9 +74,9 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='token',
             data_schema=vol.Schema({
-                vol.Required("text", default=url): cv.string,
                 vol.Required(CONF_CHECK_CODE): cv.string
-            })
+            }),
+            description_placeholders={PLACEHOLDER_CHECK_CODE_URL: url}
         )
 
     @staticmethod
@@ -141,7 +142,7 @@ class OptionsFlowHandler(OptionsFlow):
         return self.async_show_form(
             step_id='token',
             data_schema=vol.Schema({
-                vol.Required("text", default=url): cv.string,
                 vol.Required(CONF_CHECK_CODE): cv.string
-            })
+            }),
+            description_placeholders={PLACEHOLDER_CHECK_CODE_URL: url}
         )
