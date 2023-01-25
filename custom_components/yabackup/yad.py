@@ -1,3 +1,4 @@
+""" Core integration objects"""
 import base64
 import datetime
 import logging
@@ -21,11 +22,13 @@ TYPE_FILE = 'file'
 
 
 async def async_get_token(hass: HomeAssistant, client_id, client_secret, check_code) -> dict:
+    """ Get token. Async call from hass core."""
     response = await  hass.async_add_executor_job(_get_token, client_id, client_secret, check_code)
     return response
 
 
 def _get_token(client_id, client_secret, check_code) -> dict:
+    """ Get token. """
     headers = {}
     headers[HEAD_CONTENT_TYPE] = CONTENT_TYPE_FORM
     headers[HEAD_AUTHORIZATION] = 'Basic ' + str(
@@ -52,6 +55,7 @@ def _get_token(client_id, client_secret, check_code) -> dict:
 
 
 def _refresh_token_request(refresh_token, client_id, client_secret):
+    """ Refresh token. """
     try:
         _LOGGER.debug("Try refresh token")
         token_object: TokenObject = yadisk.functions.refresh_token(refresh_token, client_id, client_secret)
@@ -70,10 +74,14 @@ def _refresh_token_request(refresh_token, client_id, client_secret):
 
 
 def _get_auth_string(client_id, client_secret):
+    """ Get auth string for basic authorisation """
     return base64.b64encode(bytes(client_id + ':' + client_secret, 'utf-8')).decode('utf-8')
 
 
 class YaDsk:
+    """ Core integration class.
+    Contains all method for YandexDisk communication.
+    """
     _token = None
     _path = None
     _upload_without_suffix = True
@@ -85,10 +93,12 @@ class YaDsk:
 
     @property
     def file_amount(self):
+        """ File amount """
         return self._file_amount
 
     @property
     def file_markdown_list(self):
+        """ File list in markdown format """
         return self._file_markdown_list
 
     def __init__(self, hass: HomeAssistant, config: dict, unique_id=None):
@@ -104,9 +114,11 @@ class YaDsk:
         self._hass = hass
 
     def get_info(self):
+        """ Get class info """
         return "path: " + self._path
 
     def update_config(self, config: dict):
+        """ Update class when integration config updated """
         self._options = {}
         self._options.update(config)
         self._path = config[CONF_PATH]
@@ -123,11 +135,18 @@ class YaDsk:
         """Listeners to handle automatic data update."""
         self._update_listeners.append(coro)
 
-    async def count_files(self):
-        await self._hass.async_add_executor_job(self._count_files)
+    async def list_yandex_disk(self):
+        """ List yandex disk directory. Async call from hass core/ """
+
+        await self._hass.async_add_executor_job(self._list_yandex_disk)
         _LOGGER.debug("Count files result: %s", self.file_amount)
 
-    def _count_files(self):
+    def _list_yandex_disk(self):
+        """ List yandex disk directory.
+
+        Fill file amount< file markdown list and file simple list.
+
+        """
         try:
             y = yadisk.YaDisk(token=self._token)
             files = self._file_list_processing(y.listdir(self._path))
@@ -139,10 +158,16 @@ class YaDsk:
             _LOGGER.error("Error get directory info. Path: %s", self._path, exc_info=True)
 
     async def upload_files(self):
+        """ Upload files to yandex. Assync call with hass core.
+
+            Refresh token.
+            Upload new files and delete old files from yandex disk.
+            Refresh yandex disk directory information
+        """
         await self._refresh_token_if_need(REFRESH_TOKEN_DELTA)
 
         local_backups = await self.get_local_files_list()
-        await self.count_files()
+        await self.list_yandex_disk()
 
         new_files = [file for file in local_backups.keys() if file not in self._file_list]
 
@@ -169,9 +194,10 @@ class YaDsk:
                                                         y, self._path + '/' + old_file)
 
         if new_files or is_deleted:
-            await self.count_files()
+            await self.list_yandex_disk()
 
     async def get_local_files_list(self):
+        """ Get list of home assistant backups """
 
         manager: BackupManager = self._hass.data[BACKUP_DOMAIN]
         backups = await manager.get_backups()
@@ -186,6 +212,7 @@ class YaDsk:
         return result
 
     def _upload_file(self, y: yadisk.YaDisk, source_file, destination_file):
+        """ Upload files to yandex disk """
         try:
             _LOGGER.info('Upload file %s to %s', source_file, destination_file)
             y.upload(source_file, destination_file, overwrite=True, n_retries=3, retry_interval=5,
@@ -196,6 +223,7 @@ class YaDsk:
             raise e
 
     def _remove_file(self, y: yadisk.YaDisk, deleted_file):
+        """ Remove files from yandex disk """
         try:
             _LOGGER.info('Remove file %s', deleted_file)
             y.remove(deleted_file, n_retries=3, retry_interval=5)
@@ -204,17 +232,16 @@ class YaDsk:
             _LOGGER.error("Error when remove file %s", deleted_file, exc_info=True)
             raise e
 
-    def _get_local_backup_dir(self):
-        return self._hass.data[BACKUP_DOMAIN].backup_dir
-
     async def _refresh_token_if_need(self, delta: datetime.timedelta):
-        if ( datetime.datetime.now() + delta) >  datetime.datetime.fromisoformat(self._token_expire_date):
+        """ Refresh token when token lifetime go out bound """
+        if (datetime.datetime.now() + delta) > datetime.datetime.fromisoformat(self._token_expire_date):
             _LOGGER.debug("Need refresh token")
             await self._refresh_token()
         else:
             _LOGGER.debug("Refresh token not needed")
 
     async def _refresh_token(self):
+        """ Refresh token and save new token info in integration configuration """
         result = await self._hass.async_add_executor_job(_refresh_token_request, self._refresh_token_value,
                                                          self._client_id, self._client_s)
 
@@ -226,6 +253,7 @@ class YaDsk:
         await self._handle_update()
 
     async def _handle_update(self):
+        """ Update integration configuration by changed class attributes """
         for coro in self._update_listeners:
             await coro(
                 self._options
@@ -233,19 +261,21 @@ class YaDsk:
 
     @staticmethod
     def _file_list_processing(objects: Generator[any, any, ResourceObject]) -> list:
+        """ Processing file list, received from Yandex Disk """
         files = [obj for obj in objects if obj.type == TYPE_FILE]
         result = sorted(files, key=lambda obj: obj.modified, reverse=True)
         return result
 
     @staticmethod
     def _get_markdown_files(files: list[ResourceObject], max_items: int):
+        """ Processing file list and form markdown formatting file list """
         if len(files) == 0:
             return ""
 
         result = "|name|modification|\n|---|---|"
         file_count = 0
         for file in files:
-            result += "\n|{0:s}|{1}|".format(file.name, file.modified)
+            result += "\n|{0:s}|{1:s}|".format(file.name, file.modified.strftime('%d.%m.%Y %H:%M:%S'))
             file_count += 1
             if file_count >= max_items:
                 break

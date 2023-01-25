@@ -1,3 +1,4 @@
+""" All integration constants """
 import datetime
 
 DOMAIN = 'yabackup'
