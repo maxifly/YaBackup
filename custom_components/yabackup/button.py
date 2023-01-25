@@ -1,3 +1,4 @@
+""" Integration buttons """
 import logging
 
 from homeassistant.components.button import ButtonEntity
@@ -12,6 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                             async_add_entities):
+    """ Create all integration buttons """
     ya_disk = hass.data[DOMAIN][entry.entry_id]
 
     entity1 = UpdateButton(ya_disk)
@@ -20,7 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
 
 
 class UpdateButton(ButtonEntity):
-    """Representation of a Button."""
+    """ Button for update information about YandexDisk directory """
 
     _attr_name = DOMAIN + "_update_button"
 
@@ -32,12 +34,12 @@ class UpdateButton(ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self._ya_dsk.count_files()
+        await self._ya_dsk.list_yandex_disk()
         _LOGGER.debug("Button press processed")
 
 
 class UploadButton(ButtonEntity):
-    """Representation of a Button."""
+    """ Button for upload files to YandexDisk """
 
     _attr_name = DOMAIN + "_upload_button"
 

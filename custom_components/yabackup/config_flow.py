@@ -18,7 +18,8 @@ INTEGRATION_TITLE = 'Backup to YandexDisk'
 PLACEHOLDER_CHECK_CODE_URL = 'check_code_url'
 
 
-def option_without_secret_data(options: dict) -> dict:
+def clear_option(options: dict) -> dict:
+    """ Clear option from not needed data"""
     result = {}
     for key, value in options.items():
         if key not in SECURITY_KEYS:
@@ -28,6 +29,7 @@ def option_without_secret_data(options: dict) -> dict:
 
 
 class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
+    """ Configuration flow handler. Using when new integration configurated """
     VERSION = 1
     _data = None
 
@@ -68,7 +70,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             _LOGGER.debug(f"Get token: {token_info}")
             self._data.update(token_info)
 
-            return self.async_create_entry(title=INTEGRATION_TITLE, data=option_without_secret_data(self._data))
+            return self.async_create_entry(title=INTEGRATION_TITLE, data=clear_option(self._data))
 
         url = URL_GET_CODE + self._data[CONF_CLIENT_ID]
         return self.async_show_form(
@@ -86,6 +88,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(OptionsFlow):
+    """ Option flow handler. Used when changed parameters of existent integration """
     _data = {}
 
     def __init__(self, config_entry: ConfigEntry):
@@ -110,7 +113,7 @@ class OptionsFlowHandler(OptionsFlow):
             self._data = user_input
             return await self.async_step_client()
         self._data.update(user_input)
-        return self.async_create_entry(title='', data=option_without_secret_data(self._data))
+        return self.async_create_entry(title='', data=clear_option(self._data))
 
     async def async_step_client(self, user_input=None):
         if user_input is not None:
@@ -136,7 +139,7 @@ class OptionsFlowHandler(OptionsFlow):
             _LOGGER.debug(f"Get token: {token_info}")
             self._data.update(token_info)
 
-            return self.async_create_entry(title='', data=option_without_secret_data(self._data))
+            return self.async_create_entry(title='', data=clear_option(self._data))
 
         url = URL_GET_CODE + self._data[CONF_CLIENT_ID]
         return self.async_show_form(

@@ -1,4 +1,4 @@
-"""Platform for sensor integration."""
+""" Integration sensors """
 import logging
 
 from homeassistant.components.sensor import (
@@ -13,45 +13,33 @@ from .constants import DOMAIN
 from .yad import YaDsk
 
 _LOGGER = logging.getLogger(__name__)
-MARKDOWN_FILES="markdown_file_list"
-
-# from __future__ import annotations
-
-
-# def setup_platform(
-#         hass: HomeAssistant,
-#         config: ConfigType,
-#         add_entities: AddEntitiesCallback,
-#         discovery_info: DiscoveryInfoType | None = None
-# ) -> None:
-#     """Set up the sensor platform."""
-#     add_entities([ExampleSensor(config, None)], True)
+MARKDOWN_FILES = "markdown_file_list"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                             async_add_entities):
+    """ Create all integration sensors """
     ya_disk = hass.data[DOMAIN][entry.entry_id]
 
-    entity = ExampleSensor(ya_disk)
+    entity = DiskInfoSensor(ya_disk)
     async_add_entities([entity], True)
 
     # hass.data[DOMAIN][entry.entry_id] = entity
 
 
-class ExampleSensor(SensorEntity):
-    """Representation of a Sensor."""
+class DiskInfoSensor(SensorEntity):
+    """ Sensor with information about YandexDisk directory """
 
-    _attr_name = DOMAIN + "_file_count"
+    _attr_name = DOMAIN + "_disk_info"
     # _attr_native_unit_of_measurement = TEMP_CELSIUS
     _attr_device_class = SensorDeviceClass.VOLUME
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    _attr_extra_state_attributes = {MARKDOWN_FILES:""}
+    _attr_extra_state_attributes = {MARKDOWN_FILES: ""}
     _ya_dsk = None
 
     def __init__(self, ya_dsk: YaDsk):
         self._ya_dsk = ya_dsk
-
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
