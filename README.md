@@ -15,11 +15,8 @@
 
 ## Установка
 
-**Способ 1.** [HACS](https://hacs.xyz/)
 
-> HACS > Интеграции > 3 точки (правый верхний угол) > Пользовательские репозитории > URL: `AlexxIT/GyverLamp`, Категория: Интеграция > Добавить > подождать > GyverLamp > Установить
-
-**Способ 2.** Вручную скопируйте папку `yabackup` из [latest release](https://github.com/maxifly/yaBackup/releases/latest) в директорию `/config/custom_components`.
+**Способ 1.** Вручную скопируйте папку `yabackup` из [latest release](https://github.com/maxifly/YaBackup/releases/latest) в директорию `/config/custom_components`.
 
 ## Настройка
 
@@ -29,16 +26,16 @@
 2. Выбрать пункт "Создать приложение"
 3. Выбрать вариант "Другие сервисы" 
 
-![](doc_screens/app_create_step1.png)
+> ![](doc_screens/app_create_step1.png)
 
 5. Заполнить "название приложения", желательно загрузить иконку приложения
 6. В пункте "для какой платформы?" выбрать "Веб-сервисы" и "подставить URL для разработки"
  
-![](doc_screens/app_create_step2.png)
+> ![](doc_screens/app_create_step2.png)
 
 7. В списке приложений выбрать "Яндекс.Диск REST API" и необходимые разрешения 
 
-![](doc_screens/app_create_step3.png)
+> ![](doc_screens/app_create_step3.png)
 
 8. После сохранения изменений будет создано приложение. Необходимо запомнить ClientId и ClientSecret. (Доступ к этому приложению будет всегда возможен на странице [со списком ваших приложений](https://oauth.yandex.ru/))
 
@@ -49,12 +46,12 @@
 4. Заполнить ClientId и ClientSecret. Нажать "подтвердить"
 5. Перейти по ссылке
 
-![](doc_screens/ha_create_step1.png)
+> ![](doc_screens/ha_create_step1.png)
 
 
 6. Перейдя по ссылке подтвердить разрешение на доступ к Яндекс Диску и получить код подтверждения. Вернуться к настройкам и код в соответствующее поле
 
-![](doc_screens/ha_create_step2.png)
+> ![](doc_screens/ha_create_step2.png)
 
 ## Объекты интеграции
 
@@ -76,7 +73,7 @@
 ```
 Результат:
 
-![](doc_screens/sensor_1.png)
+> ![](doc_screens/sensor_1.png)
 
 ## Кнопка обновления информации о каталоге на Яндекс Диске (yabackup_update_button)
 
