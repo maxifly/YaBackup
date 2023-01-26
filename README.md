@@ -16,7 +16,11 @@
 ## Установка
 
 
-**Способ 1.** Вручную скопируйте папку `yabackup` из [latest release](https://github.com/maxifly/YaBackup/releases/latest) в директорию `/config/custom_components`.
+**Способ 1.** [HACS](https://hacs.xyz/)
+
+> HACS > Интеграции > 3 точки (правый верхний угол) > Пользовательские репозитории > URL: `https://github.com/maxifly/YaBackup`, Категория: Интеграция > Добавить > подождать > YaBackup > Скачать
+
+**Способ 2.** Вручную скопируйте папку `yabackup` из [latest release](https://github.com/maxifly/YaBackup/releases/latest) в директорию `/config/custom_components`.
 
 ## Настройка
 
