@@ -1,13 +1,15 @@
 """ Core integration objects"""
 import base64
 import datetime
+import json
 import logging
+import tarfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Generator
 
 import requests
 import yadisk as yadisk
-from homeassistant.components.backup import BackupManager
-from homeassistant.components.backup.const import DOMAIN as BACKUP_DOMAIN
 from homeassistant.core import HomeAssistant
 from yadisk.objects import ResourceObject
 from yadisk.objects import TokenObject
@@ -78,10 +80,68 @@ def _get_auth_string(client_id, client_secret):
     return base64.b64encode(bytes(client_id + ':' + client_secret, 'utf-8')).decode('utf-8')
 
 
+@dataclass
+class Backup:
+    """Backup class."""
+
+    slug: str
+    name: str
+    date: str
+    path: Path
+    size: float
+
+
+class BackupObserver:
+    """Backup observer.
+    Base on core BackupManager
+    """
+
+    def __init__(self, hass: HomeAssistant, backup_dir: str) -> None:
+        """ Initialize the backup observer."""
+        self.hass = hass
+        self.backup_dir = Path(hass.config.path("backups")) if backup_dir is None else Path(backup_dir)
+
+    async def get_backups(self) -> dict[str, Backup]:
+        """ Get data of stored backup files."""
+        backups = await self.hass.async_add_executor_job(self._read_backups)
+
+        _LOGGER.debug("Loaded %s backups", len(backups))
+
+        return backups
+
+    def _read_backups(self) -> dict[str, Backup]:
+        """Read backups from disk."""
+        _LOGGER.debug("Check %s path", self.backup_dir)
+
+        _LOGGER.debug("Size %s", len(list(self.backup_dir.glob("*"))))
+
+        for backup_path in self.backup_dir.glob("*"):
+            _LOGGER.debug("backup_path %s", backup_path)
+
+        backups: dict[str, Backup] = {}
+        for backup_path in self.backup_dir.glob("*.tar"):
+            try:
+                with tarfile.open(backup_path, "r:") as backup_file:
+                    if data_file := backup_file.extractfile("./backup.json"):
+                        data = json.loads(data_file.read())
+                        backup = Backup(
+                            slug=data["slug"],
+                            name=data["name"],
+                            date=data["date"],
+                            path=backup_path,
+                            size=round(backup_path.stat().st_size / 1_048_576, 2),
+                        )
+                        backups[backup.slug] = backup
+            except (OSError, tarfile.TarError, json.JSONDecodeError, KeyError) as err:
+                _LOGGER.warning("Unable to read backup %s: %s", backup_path, err)
+        return backups
+
+
 class YaDsk:
     """ Core integration class.
     Contains all method for YandexDisk communication.
     """
+    _backup_observer = None
     _token = None
     _path = None
     _upload_without_suffix = True
@@ -98,10 +158,10 @@ class YaDsk:
 
     @property
     def file_markdown_list(self):
-        """ File list in markdown format """
+        """ File list in Markdown format """
         return self._file_markdown_list
 
-    def __init__(self, hass: HomeAssistant, config: dict, unique_id=None):
+    def __init__(self, hass: HomeAssistant, backup_observer: BackupObserver, config: dict, unique_id=None):
         self._options = {}
         self._options.update(config)
         self._token = config[CONF_TOKEN]
@@ -112,6 +172,7 @@ class YaDsk:
         self._client_id = config[CONF_CLIENT_ID]
         self._client_s = config[CONF_CLIENT_SECRET]
         self._hass = hass
+        self._backup_observer = backup_observer
 
     def get_info(self):
         """ Get class info """
@@ -144,7 +205,7 @@ class YaDsk:
     def _list_yandex_disk(self):
         """ List yandex disk directory.
 
-        Fill file amount< file markdown list and file simple list.
+        Fill file amount< file Markdown list and file simple list.
 
         """
         try:
@@ -199,12 +260,11 @@ class YaDsk:
     async def get_local_files_list(self):
         """ Get list of home assistant backups """
 
-        manager: BackupManager = self._hass.data[BACKUP_DOMAIN]
-        backups = await manager.get_backups()
+        backups = await self._backup_observer.get_backups()
 
         result = {}
         for backup in backups.values():
-            key = backup.name + '_' + backup.slug
+            key = (backup.name + '_' + backup.slug).replace(" ","-").replace(":","_")
             if not self._upload_without_suffix:
                 key += '.tar'
             result[key] = backup.path
