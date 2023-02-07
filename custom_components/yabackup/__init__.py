@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .constants import DOMAIN
-from .yad import YaDsk
+from .yad import YaDsk, BackupObserver
 
 #
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +35,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # add options handler
     entry.add_update_listener(async_update_options)
 
-    ya_dsk = YaDsk(hass, entry.options, entry.entry_id)
+    backup_observer = BackupObserver(hass, "/backup")
+    ya_dsk = YaDsk(hass, backup_observer, entry.options, entry.entry_id)
     _LOGGER.info("Create YaDisk " + ya_dsk.get_info())
 
     ya_dsk.add_update_listener(update_yad_option)
